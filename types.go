@@ -34,12 +34,13 @@ type getResponse struct {
 type postResponse struct {
 	headersResponse
 	ipResponse
-	URL   string                 `json:"url"`
-	Args  map[string]interface{} `json:"args"`
-	Data  string                 `json:"data"`
-	Files map[string]string      `json:"files"`
-	Form  map[string]interface{} `json:"form"`
-	JSON  interface{}            `json:"json"`
+	URL    string                 `json:"url"`
+	Args   map[string]interface{} `json:"args"`
+	Data   string                 `json:"data"`
+	Files  map[string]string      `json:"files"`
+	Form   map[string]interface{} `json:"form"`
+	JSON   interface{}            `json:"json"`
+	Method string                 `json:"method,omitempty"`
 }
 
 type gzipResponse struct {

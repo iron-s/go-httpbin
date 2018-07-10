@@ -143,6 +143,7 @@ func TestGet(t *testing.T) {
 		Args    map[string]interface{} `json:"args"`
 		Headers map[string]string      `json:"headers"`
 		Origin  string                 `json:"origin"`
+		URL     string                 `json:"url"`
 	}{}
 	require.Nil(t, json.Unmarshal(b, &v))
 	require.NotEmpty(t, v.Args, "args empty")
@@ -152,6 +153,7 @@ func TestGet(t *testing.T) {
 	}, v.Args)
 	require.NotEmpty(t, v.Headers)
 	require.NotEmpty(t, v.Origin)
+	require.NotEmpty(t, v.URL)
 }
 func TestPost(t *testing.T) {
 	srv := testServer()
@@ -166,6 +168,7 @@ func TestPost(t *testing.T) {
 		Origin  string                 `json:"origin"`
 		Data    string                 `json:"data"`
 		JSON    interface{}            `json:"json"`
+		URL     string                 `json:"url"`
 	}{}
 	require.Nil(t, json.Unmarshal(b, &v))
 	require.EqualValues(t, map[string]interface{}{
@@ -176,6 +179,69 @@ func TestPost(t *testing.T) {
 	require.EqualValues(t, data, v.Data)
 	require.NotEmpty(t, v.Headers)
 	require.NotEmpty(t, v.Origin)
+	require.NotEmpty(t, v.URL)
+}
+
+func TestAnything(t *testing.T) {
+	srv := testServer()
+	defer srv.Close()
+
+	tests := []struct {
+		method, url string
+		data        []byte
+		values      map[string]interface{}
+	}{
+		{"GET", "/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"HEAD", "/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"OPTIONS", "/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"POST", "/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"PUT", "/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"PATCH", "/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"DELETE", "/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"GET", "/anything/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"HEAD", "/anything/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"OPTIONS", "/anything/anything?k1=v1&k1=v2&k3=v3", nil,
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"POST", "/anything/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"PUT", "/anything/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"PATCH", "/anything/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+		{"DELETE", "/anything/anything?k1=v1&k1=v2&k3=v3", []byte(`{[{"k1": "v1"}]}`),
+			map[string]interface{}{"k1": []interface{}{"v1", "v2"}, "k3": "v3"}},
+	}
+	for _, test := range tests {
+		b := req(t, srv.URL+test.url, test.method, test.data)
+		v := struct {
+			Args    map[string]interface{} `json:"args"`
+			Headers map[string]string      `json:"headers"`
+			Origin  string                 `json:"origin"`
+			Data    string                 `json:"data"`
+			JSON    interface{}            `json:"json"`
+			Method  string                 `json:"method"`
+			URL     string                 `json:"url"`
+		}{}
+		if test.method == "HEAD" {
+			require.Empty(t, b, test.method)
+			continue
+		}
+		require.Nil(t, json.Unmarshal(b, &v), test.method)
+		require.EqualValues(t, test.values, v.Args, test.method)
+		require.EqualValues(t, string(test.data), v.Data, test.method)
+		require.EqualValues(t, srv.URL+test.url, v.URL, test.method)
+		require.NotEmpty(t, v.Headers, test.method)
+		require.NotEmpty(t, v.Origin, test.method)
+	}
 }
 
 func TestRedirect(t *testing.T) {

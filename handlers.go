@@ -74,6 +74,8 @@ func GetMux() *mux.Router {
 	r.HandleFunc(`/image/gif`, GIFHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/png`, PNGHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/jpeg`, JPEGHandler).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc(`/anything`, PostHandler)
+	r.HandleFunc(`/anything/{anything}`, PostHandler)
 	return r
 }
 
@@ -124,6 +126,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		headersResponse: headersResponse{getHeaders(r)},
 		ipResponse:      ipResponse{h},
 		Args:            flattenValues(r.URL.Query()),
+		URL:             fullURL(r),
 	}
 
 	if err := writeJSON(w, v); err != nil {
@@ -156,6 +159,11 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		Args:            flattenValues(r.URL.Query()),
 		Data:            string(data),
 		JSON:            jsonPayload,
+		URL:             fullURL(r),
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/anything") {
+		v.Method = r.Method
 	}
 
 	if err := writeJSON(w, v); err != nil {
@@ -658,4 +666,19 @@ func parseData(r *http.Request) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func fullURL(r *http.Request) string {
+	url := *(r.URL)
+	if url.Scheme == "" {
+		if r.TLS != nil {
+			url.Scheme = "https"
+		} else {
+			url.Scheme = "http"
+		}
+	}
+	if url.Host == "" {
+		url.Host = r.Host
+	}
+	return url.String()
 }
