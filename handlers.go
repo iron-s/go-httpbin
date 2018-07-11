@@ -177,7 +177,7 @@ func AnythingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var jsonPayload interface{}
-	if strings.Contains(r.Header.Get("Content-Type"), "json") && data != nil {
+	if strings.Contains(r.Header.Get("Content-Type"), "json") && len(data) > 0 {
 		err := json.Unmarshal(data, &jsonPayload)
 		if err != nil {
 			writeErrorJSON(w, errors.Wrap(err, "failed to read body"))
