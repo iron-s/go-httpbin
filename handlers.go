@@ -74,7 +74,7 @@ func GetMux() *mux.Router {
 	r.HandleFunc(`/image/gif`, GIFHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/png`, PNGHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/jpeg`, JPEGHandler).Methods(http.MethodGet, http.MethodHead)
-	r.PathPrefix(`/anything`).HandlerFunc(PostHandler)
+	r.PathPrefix(`/anything`).HandlerFunc(AnythingHandler)
 	return r
 }
 
@@ -161,8 +161,38 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		URL:             fullURL(r),
 	}
 
-	if strings.HasPrefix(r.URL.Path, "/anything") {
-		v.Method = r.Method
+	if err := writeJSON(w, v); err != nil {
+		writeErrorJSON(w, errors.Wrap(err, "failed to write json"))
+	}
+}
+
+// AnythingHandler accept any method and echo its data back, including method
+func AnythingHandler(w http.ResponseWriter, r *http.Request) {
+	h, _, _ := net.SplitHostPort(r.RemoteAddr)
+
+	data, err := parseData(r)
+	if err != nil {
+		writeErrorJSON(w, errors.Wrap(err, "failed to read body"))
+		return
+	}
+
+	var jsonPayload interface{}
+	if strings.Contains(r.Header.Get("Content-Type"), "json") && data != nil {
+		err := json.Unmarshal(data, &jsonPayload)
+		if err != nil {
+			writeErrorJSON(w, errors.Wrap(err, "failed to read body"))
+			return
+		}
+	}
+
+	v := postResponse{
+		headersResponse: headersResponse{getHeaders(r)},
+		ipResponse:      ipResponse{h},
+		Args:            flattenValues(r.URL.Query()),
+		Data:            string(data),
+		JSON:            jsonPayload,
+		URL:             fullURL(r),
+		Method:          r.Method,
 	}
 
 	if err := writeJSON(w, v); err != nil {
