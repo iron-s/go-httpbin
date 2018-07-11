@@ -74,8 +74,7 @@ func GetMux() *mux.Router {
 	r.HandleFunc(`/image/gif`, GIFHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/png`, PNGHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/image/jpeg`, JPEGHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(`/anything`, PostHandler)
-	r.HandleFunc(`/anything/{anything}`, PostHandler)
+	r.PathPrefix(`/anything`).HandlerFunc(PostHandler)
 	return r
 }
 
