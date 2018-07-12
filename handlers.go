@@ -51,7 +51,7 @@ func GetMux() *mux.Router {
 	r.HandleFunc(`/post`, PostHandler).Methods(http.MethodPost)
 	r.HandleFunc(`/redirect/{n:[\d]+}`, RedirectHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/absolute-redirect/{n:[\d]+}`, AbsoluteRedirectHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(`/redirect-to`, RedirectToHandler).Methods(http.MethodGet, http.MethodHead).Queries("url", "{url:.+}", "status_code", `{n:[\d]+}`)
+	r.HandleFunc(`/redirect-to`, RedirectToHandler).Methods(http.MethodGet, http.MethodHead).Queries("url", "{url:.+}")
 	r.HandleFunc(`/status/{code:[\d]+}`, StatusHandler)
 	r.HandleFunc(`/bytes/{n:[\d]+}`, BytesHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/delay/{n:\d+(?:\.\d+)?}`, DelayHandler).Methods(http.MethodGet, http.MethodHead)
@@ -244,10 +244,10 @@ func AbsoluteRedirectHandler(w http.ResponseWriter, r *http.Request) {
 // response pointing to the url query parameter
 func RedirectToHandler(w http.ResponseWriter, r *http.Request) {
 	u := mux.Vars(r)["url"]
-	s := mux.Vars(r)["status_code"]
 	status := http.StatusFound
-	if s != "" {
-		status, _ = strconv.Atoi(s)
+	s := r.URL.Query().Get("status_code")
+	if status_code, err := strconv.Atoi(s); err == nil {
+		status = status_code
 	}
 
 	w.Header().Set("Location", u)
