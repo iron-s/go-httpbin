@@ -247,7 +247,7 @@ func RedirectToHandler(w http.ResponseWriter, r *http.Request) {
 	s := mux.Vars(r)["status_code"]
 	status := http.StatusFound
 	if s != "" {
-		status, _ := strconv.Atoi(s)
+		status, _ = strconv.Atoi(s)
 	}
 
 	w.Header().Set("Location", u)
