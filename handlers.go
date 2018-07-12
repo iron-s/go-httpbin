@@ -51,7 +51,7 @@ func GetMux() *mux.Router {
 	r.HandleFunc(`/post`, PostHandler).Methods(http.MethodPost)
 	r.HandleFunc(`/redirect/{n:[\d]+}`, RedirectHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/absolute-redirect/{n:[\d]+}`, AbsoluteRedirectHandler).Methods(http.MethodGet, http.MethodHead)
-	r.HandleFunc(`/redirect-to`, RedirectToHandler).Methods(http.MethodGet, http.MethodHead).Queries("url", "{url:.+}")
+	r.HandleFunc(`/redirect-to`, RedirectToHandler).Methods(http.MethodGet, http.MethodHead).Queries("url", "{url:.+}", "status_code", `{n:[\d]+}`)
 	r.HandleFunc(`/status/{code:[\d]+}`, StatusHandler)
 	r.HandleFunc(`/bytes/{n:[\d]+}`, BytesHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc(`/delay/{n:\d+(?:\.\d+)?}`, DelayHandler).Methods(http.MethodGet, http.MethodHead)
@@ -240,12 +240,18 @@ func AbsoluteRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-// RedirectToHandler returns a 302 Found response pointing to
-// the url query parameter
+// RedirectToHandler returns a 302 Found or as specified in status_code
+// response pointing to the url query parameter
 func RedirectToHandler(w http.ResponseWriter, r *http.Request) {
 	u := mux.Vars(r)["url"]
+	s := mux.Vars(r)["status_code"]
+	status := http.StatusFound
+	if s != "" {
+		status, _ := strconv.Atoi(s)
+	}
+
 	w.Header().Set("Location", u)
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(status)
 }
 
 // StatusHandler returns a proper response for provided status code
