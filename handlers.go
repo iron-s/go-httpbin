@@ -3,6 +3,7 @@
 package httpbin
 
 import (
+	"bytes"
 	"compress/flate"
 	"compress/gzip"
 	"encoding/json"
@@ -143,6 +144,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.ParseForm()
+
 	var jsonPayload interface{}
 	if strings.Contains(r.Header.Get("Content-Type"), "json") {
 		err := json.Unmarshal(data, &jsonPayload)
@@ -159,6 +162,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		Data:            string(data),
 		JSON:            jsonPayload,
 		URL:             fullURL(r),
+		Form:            flattenValues(r.PostForm),
 	}
 
 	if err := writeJSON(w, v); err != nil {
@@ -175,6 +179,8 @@ func AnythingHandler(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, errors.Wrap(err, "failed to read body"))
 		return
 	}
+
+	r.ParseForm()
 
 	var jsonPayload interface{}
 	if strings.Contains(r.Header.Get("Content-Type"), "json") && len(data) > 0 {
@@ -193,6 +199,7 @@ func AnythingHandler(w http.ResponseWriter, r *http.Request) {
 		JSON:            jsonPayload,
 		URL:             fullURL(r),
 		Method:          r.Method,
+		Form:            flattenValues(r.PostForm),
 	}
 
 	if err := writeJSON(w, v); err != nil {
@@ -693,6 +700,8 @@ func parseData(r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	r.Body = ioutil.NopCloser(bytes.NewReader(data))
 
 	return data, nil
 }
