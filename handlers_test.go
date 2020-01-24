@@ -14,11 +14,10 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
-	"runtime"
 	"testing"
 	"time"
 
-	"github.com/ahmetb/go-httpbin"
+	httpbin "github.com/ahmetb/go-httpbin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -332,8 +331,8 @@ func TestBytes_size(t *testing.T) {
 	defer srv.Close()
 
 	sizes := []int{
-		0, // empty
-		1, // 1 byte
+		0,                           // empty
+		1,                           // 1 byte
 		httpbin.BinaryChunkSize - 1, // off by one case
 		httpbin.BinaryChunkSize,     // off by one case
 		httpbin.BinaryChunkSize + 1, // off by one case
@@ -512,19 +511,12 @@ func TestDeleteCookies(t *testing.T) {
 	for _, c := range cj.Cookies(u) {
 		cs = append(cs, c.String())
 	}
-	if runtime.Version() >= "go1.8" {
-		require.NotContains(t, cs, "k1=")
-		require.NotContains(t, cs, "k2=")
-		require.NotContains(t, cs, "k1=v1")
-		require.NotContains(t, cs, "k2=v2")
-		require.Contains(t, cs, "k3=v3")
-		require.Equal(t, 1, len(cs))
-	} else {
-		require.Contains(t, cs, "k1=")
-		require.Contains(t, cs, "k2=")
-		require.Contains(t, cs, "k3=v3")
-		require.Equal(t, 3, len(cs))
-	}
+	require.NotContains(t, cs, "k1=")
+	require.NotContains(t, cs, "k2=")
+	require.NotContains(t, cs, "k1=v1")
+	require.NotContains(t, cs, "k2=v2")
+	require.Contains(t, cs, "k3=v3")
+	require.Equal(t, 1, len(cs))
 }
 
 func TestDrip_code(t *testing.T) {
