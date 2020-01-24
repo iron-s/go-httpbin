@@ -468,7 +468,7 @@ func GZIPHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Encoding", "gzip")
 	ww := gzip.NewWriter(w)
 	defer ww.Close() // flush
-	if err := writeJSON(ww, v); err != nil {
+	if err := encodeJSON(ww, v); err != nil {
 		writeErrorJSON(w, errors.Wrap(err, "failed to write json"))
 	}
 }
@@ -486,7 +486,7 @@ func DeflateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Encoding", "deflate")
 	ww, _ := flate.NewWriter(w, flate.BestCompression)
 	defer ww.Close() // flush
-	if err := writeJSON(ww, v); err != nil {
+	if err := encodeJSON(ww, v); err != nil {
 		writeErrorJSON(w, errors.Wrap(err, "failed to write json"))
 	}
 }

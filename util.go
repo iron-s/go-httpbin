@@ -9,13 +9,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-func writeJSON(w io.Writer, v interface{}) error {
+func writeJSON(w http.ResponseWriter, v interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
+	return encodeJSON(w, v)
+}
+
+func encodeJSON(w io.Writer, v interface{}) error {
 	e := json.NewEncoder(w)
 	e.SetIndent("", "  ")
 	return errors.Wrap(e.Encode(v), "failed to encode JSON")
 }
 
 func writeErrorJSON(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
 	_ = writeJSON(w, errorResponse{errObj{err.Error()}}) // ignore error, can't do anything
 }
